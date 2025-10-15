@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卸発送管理システム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>卸発送管理システム</h1>
+            <p>受注から発送まで一括管理</p>
+        </header>
+
+        <main>
+            <!-- 受注登録フォーム -->
+            <section class="order-form-section">
+                <h2>新規受注登録</h2>
+                <form id="orderForm" class="order-form">
+                    <div class="form-group">
+                        <label for="orderContent">受注内容</label>
+                        <textarea id="orderContent" name="orderContent" placeholder="商品名、数量、仕様などを入力してください" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="orderNumber">受注番号</label>
+                            <input type="text" id="orderNumber" name="orderNumber" placeholder="例: ORD-2024-001" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingDate">発送予定日</label>
+                            <input type="date" id="shippingDate" name="shippingDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customerName">顧客名</label>
+                        <input type="text" id="customerName" name="customerName" placeholder="顧客名を入力してください" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">受注を登録</button>
+                </form>
+            </section>
+
+            <!-- 発送一覧 -->
+            <section class="shipping-list-section">
+                <h2>発送管理一覧</h2>
+                
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="受注番号、顧客名で検索...">
+                        <button type="button" id="searchBtn" class="btn btn-secondary">検索</button>
+                    </div>
+                    
+                    <div class="status-filter">
+                        <label for="statusFilter">ステータス:</label>
+                        <select id="statusFilter">
+                            <option value="all">すべて</option>
+                            <option value="pending">発送待ち</option>
+                            <option value="shipped">発送済み</option>
+                            <option value="delivered">配送完了</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="shipping-list" id="shippingList">
+                    <!-- 発送データがここに動的に表示されます -->
+                </div>
+            </section>
+
+            <!-- 詳細モーダル -->
+            <div id="detailModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>発送詳細情報</h2>
+                    <div id="modalContent">
+                        <!-- 詳細情報がここに表示されます -->
+                    </div>
+                    <div class="modal-actions">
+                        <button id="generateLineUrl" class="btn btn-primary">LINE通知用URL生成</button>
+                        <button id="updateStatus" class="btn btn-secondary">ステータス更新</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 卸発送管理システム</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
