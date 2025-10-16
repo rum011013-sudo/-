@@ -291,28 +291,89 @@ class ShippingManager {
         this.renderShippingList(filteredOrders);
     }
 
-    // LINE通知用URL生成
+    // LINE通知用URL生成（共有オプション表示）
     generateLineUrl(orderId = null) {
         const order = orderId ? this.orders.find(o => o.id === orderId) : this.orders.find(o => o.id === this.currentOrderId);
         if (!order) return;
 
-        // 現在のページのURLを取得
-        const currentUrl = window.location.href;
-        const detailUrl = `${currentUrl}#detail/${order.managementNumber}`;
+        // 絶対URLで詳細リンクを生成（既存ハッシュは置換）
+        const urlObj = new URL(window.location.href);
+        urlObj.hash = `detail/${order.managementNumber}`;
+        const detailUrl = urlObj.toString();
 
-        // LINE通知用のメッセージを作成
+        // 共有メッセージ
         const message = `【発送管理システム】\n受注番号: ${order.orderNumber}\n顧客名: ${order.customerName}\n発送予定日: ${new Date(order.shippingDate).toLocaleDateString('ja-JP')}\n詳細確認: ${detailUrl}`;
 
-        // LINE URLを生成
-        const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
+        // Web Share API（対応端末でネイティブ共有）
+        if (navigator.share) {
+            navigator.share({ title: '発送管理', text: message, url: detailUrl })
+                .then(() => this.showMessage('共有を開始しました。', 'success'))
+                .catch(() => this.showShareOptions(detailUrl, message));
+            return;
+        }
 
-        // クリップボードにコピー
-        navigator.clipboard.writeText(lineUrl).then(() => {
-            this.showMessage('LINE通知用URLをクリップボードにコピーしました。', 'success');
-        }).catch(() => {
-            // フォールバック: テキストエリアで表示
-            this.showUrlInModal(lineUrl, message);
-        });
+        // フォールバック: 共有オプションをモーダルで提示
+        this.showShareOptions(detailUrl, message);
+    }
+
+    // 共有オプションをモーダル表示（LINE Web共有 / コピー / QR）
+    showShareOptions(detailUrl, message) {
+        const modal = document.getElementById('detailModal');
+        const content = document.getElementById('modalContent');
+
+        const lineWebShare = `https://line.me/R/share?text=${encodeURIComponent(message)}`;
+        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(detailUrl)}`;
+
+        content.innerHTML = `
+            <div>
+                <h3>共有オプション</h3>
+                <div style="display: grid; gap: 14px; margin-top: 10px;">
+                    <div>
+                        <strong>詳細URL:</strong>
+                        <div style="background:#f8f9fa; padding:10px; border-radius:6px; word-break: break-all;">${detailUrl}</div>
+                    </div>
+
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <a class="btn btn-primary" href="${lineWebShare}" target="_blank" rel="noopener">LINE（ブラウザ）で共有</a>
+                        <button class="btn btn-secondary" id="copyMessageBtn">メッセージをコピー</button>
+                        <button class="btn btn-secondary" id="copyUrlBtn">URLをコピー</button>
+                    </div>
+
+                    <div>
+                        <strong>スマホで開く（QRコード）</strong>
+                        <div style="margin-top:8px;"><img src="${qrApi}" alt="詳細URLのQRコード"></div>
+                    </div>
+
+                    <div>
+                        <strong>送信メッセージ内容</strong>
+                        <div style="background:#f8f9fa; padding:12px; border-radius:6px; white-space: pre-line;">${message}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.style.display = 'block';
+
+        // コピー操作
+        const copyMessageBtn = document.getElementById('copyMessageBtn');
+        const copyUrlBtn = document.getElementById('copyUrlBtn');
+        if (copyMessageBtn) {
+            copyMessageBtn.onclick = () => this.copyToClipboard(message, 'メッセージをコピーしました。LINEに貼り付けてください。');
+        }
+        if (copyUrlBtn) {
+            copyUrlBtn.onclick = () => this.copyToClipboard(detailUrl, 'URLをコピーしました。LINEやメールに貼り付けてください。');
+        }
+    }
+
+    // クリップボードコピー共通処理
+    copyToClipboard(text, successMsg) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => this.showMessage(successMsg || 'コピーしました。', 'success'))
+                .catch(() => this.showUrlInModal(text, text));
+        } else {
+            this.showUrlInModal(text, text);
+        }
     }
 
     // URLをモーダルで表示（フォールバック）
