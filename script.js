@@ -179,12 +179,10 @@ class ShippingManager {
                     </div>
                 </div>
                 <div class="shipping-item-actions">
-                    <button class="btn btn-secondary" onclick="event.stopPropagation(); shippingManager.showOrderDetail(${order.id})">
-                        詳細確認
-                    </button>
-                    <button class="btn btn-primary" onclick="event.stopPropagation(); shippingManager.generateLineUrl(${order.id})">
-                        LINE通知
-                    </button>
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); shippingManager.showOrderDetail(${order.id})">詳細確認</button>
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); shippingManager.openEditModal(${order.id})">編集</button>
+                    <button class="btn btn-warning" onclick="event.stopPropagation(); shippingManager.confirmDelete(${order.id})">削除</button>
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); shippingManager.generateLineUrl(${order.id})">LINE通知</button>
                 </div>
             </div>
         `;
@@ -453,7 +451,107 @@ class ShippingManager {
             }
         }, 3000);
     }
-}
+
+    // === 編集/削除 機能 ===
+    openEditModal(orderId) {
+        const order = this.orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        this.currentOrderId = orderId;
+
+        // フィールドへ反映
+        document.getElementById('editOrderContent').value = order.orderContent;
+        document.getElementById('editOrderNumber').value = order.orderNumber;
+        document.getElementById('editShippingDate').value = order.shippingDate;
+        document.getElementById('editCustomerName').value = order.customerName;
+        document.getElementById('editTrackingNumber').value = order.trackingNumber || '';
+        document.getElementById('editActualShippingDate').value = order.actualShippingDate || '';
+        document.getElementById('editNotes').value = order.notes || '';
+
+        // イベントを一度だけバインド
+        const saveBtn = document.getElementById('saveEditBtn');
+        const deleteBtn = document.getElementById('deleteOrderBtn');
+        const editClose = document.getElementById('editClose');
+        const editModal = document.getElementById('editModal');
+        const editForm = document.getElementById('editForm');
+
+        // 既存ハンドラをリセット
+        saveBtn.onclick = null;
+        deleteBtn.onclick = null;
+        editClose.onclick = null;
+
+        saveBtn.onclick = () => this.saveEdit();
+        deleteBtn.onclick = () => this.confirmDelete(orderId);
+        editClose.onclick = () => { editModal.style.display = 'none'; };
+        editForm.onsubmit = (e) => { e.preventDefault(); this.saveEdit(); };
+
+        // モーダル表示
+        editModal.style.display = 'block';
+    }
+
+    saveEdit() {
+        if (!this.currentOrderId) return;
+        const order = this.orders.find(o => o.id === this.currentOrderId);
+        if (!order) return;
+
+        const newOrderContent = document.getElementById('editOrderContent').value.trim();
+        const newOrderNumber = document.getElementById('editOrderNumber').value.trim();
+        const newShippingDate = document.getElementById('editShippingDate').value;
+        const newCustomerName = document.getElementById('editCustomerName').value.trim();
+        const newTrackingNumber = document.getElementById('editTrackingNumber').value.trim();
+        const newActualShippingDate = document.getElementById('editActualShippingDate').value;
+        const newNotes = document.getElementById('editNotes').value.trim();
+
+        if (!newOrderContent || !newOrderNumber || !newShippingDate || !newCustomerName) {
+            this.showMessage('必須項目をすべて入力してください。', 'error');
+            return;
+        }
+
+        // 受注番号の重複チェック（自分以外）
+        if (this.orders.some(o => o.orderNumber === newOrderNumber && o.id !== order.id)) {
+            this.showMessage('この受注番号は他の受注で使用されています。', 'error');
+            return;
+        }
+
+        // 反映
+        order.orderContent = newOrderContent;
+        order.orderNumber = newOrderNumber;
+        order.shippingDate = newShippingDate;
+        order.customerName = newCustomerName;
+        order.trackingNumber = newTrackingNumber;
+        order.actualShippingDate = newActualShippingDate;
+        order.notes = newNotes;
+        order.updatedAt = new Date().toISOString();
+
+        this.saveOrders();
+        this.renderShippingList();
+        document.getElementById('editModal').style.display = 'none';
+        this.showMessage('受注内容を更新しました。', 'success');
+    }
+
+    confirmDelete(orderId) {
+        const order = this.orders.find(o => o.id === orderId);
+        if (!order) return;
+        const ok = window.confirm(`受注番号「${order.orderNumber}」を削除しますか？`);
+        if (!ok) return;
+        this.deleteOrder(orderId);
+    }
+
+    deleteOrder(orderId) {
+        const before = this.orders.length;
+        this.orders = this.orders.filter(o => o.id !== orderId);
+        const after = this.orders.length;
+        if (after < before) {
+            this.saveOrders();
+            this.renderShippingList();
+            this.closeModal();
+            document.getElementById('editModal').style.display = 'none';
+            this.showMessage('受注を削除しました。', 'success');
+        } else {
+            this.showMessage('削除に失敗しました。', 'error');
+        }
+    }
+    }
 
 // ページ読み込み時に初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -483,3 +581,4 @@ window.addEventListener('load', () => {
         }
     }
 });
+// ここから下の編集系メソッドはクラス定義内にあります
