@@ -84,6 +84,53 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 編集モーダル -->
+            <div id="editModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" id="editClose">&times;</span>
+                    <h2>受注情報を編集</h2>
+                    <form id="editForm" class="order-form" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="editOrderContent">受注内容</label>
+                            <textarea id="editOrderContent" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editOrderNumber">受注番号</label>
+                                <input type="text" id="editOrderNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShippingDate">発送予定日</label>
+                                <input type="date" id="editShippingDate" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="editCustomerName">顧客名</label>
+                            <input type="text" id="editCustomerName" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editTrackingNumber">追跡番号</label>
+                                <input type="text" id="editTrackingNumber" placeholder="任意">
+                            </div>
+                            <div class="form-group">
+                                <label for="editActualShippingDate">実際の発送日</label>
+                                <input type="date" id="editActualShippingDate" placeholder="任意">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="editNotes">備考</label>
+                            <textarea id="editNotes" placeholder="任意"></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" id="deleteOrderBtn" class="btn btn-warning">この受注を削除</button>
+                            <div style="flex:1"></div>
+                            <button type="button" id="saveEditBtn" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </main>
 
         <footer>
